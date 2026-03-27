@@ -353,7 +353,7 @@
                 <value name="node_type">field</value>
                 <value name="node_subtype">unknown</value>
                 <value name="is_public">false</value>
-                <value name="field_name">portal_client_base_url</value>
+                <value name="field_name">tool_catalog_base_url</value>
                 <value name="field_type">string</value>
                 <value name="field_is_jsonSchema">true</value>
                 <value name="field_dim">0</value>
@@ -708,9 +708,6 @@
 <MAPCOPY FROM="/params;2;0/header;2;0/auth_type;1;0" TO="/mcpClientConfiguration;4;0;wx.mcp.server.doctypes:MCPClientConfig/authType;1;0">
 </MAPCOPY>
 
-<MAPCOPY FROM="/params;2;0/header;2;0/portal_client_base_url;1;0" TO="/mcpClientConfiguration;4;0;wx.mcp.server.doctypes:MCPClientConfig/portalClientBaseURL;1;0">
-</MAPCOPY>
-
 <MAPCOPY FROM="/params;2;0/header;2;0/api_key;1;0" TO="/mcpClientConfiguration;4;0;wx.mcp.server.doctypes:MCPClientConfig/apiKey;2;0/key;1;0">
 </MAPCOPY>
 
@@ -748,6 +745,9 @@
 </MAPCOPY>
 
 <MAPCOPY FROM="/params;2;0/header;2;0/response_code;1;0" TO="/mcpClientConfiguration;4;0;wx.mcp.server.doctypes:MCPClientConfig/responseCode;1;0">
+</MAPCOPY>
+
+<MAPCOPY FROM="/params;2;0/header;2;0/tool_catalog_base_url;1;0" TO="/mcpClientConfiguration;4;0;wx.mcp.server.doctypes:MCPClientConfig/toolCatalogBaseURL;1;0">
 </MAPCOPY>
 </MAP>
 
@@ -827,7 +827,7 @@
 </MAP>
 </SEQUENCE>
 
-<INVOKE TIMEOUT="" SERVICE="wx.mcp.server.services.utils:setMCPClientConfigDefaults" VALIDATE-IN="$none" VALIDATE-OUT="$none">
+<INVOKE TIMEOUT="" SERVICE="wx.mcp.server.services.utils.mcp:setMCPClientConfigDefaults" VALIDATE-IN="$none" VALIDATE-OUT="$none">
   <COMMENT></COMMENT>
 
   <!-- nodes -->
@@ -1095,7 +1095,7 @@
 </MAP>
 </INVOKE>
 
-<MAP TIMEOUT="" MODE="STANDALONE">
+<MAP TIMEOUT="" MODE="STANDALONE" DISABLED="true">
   <COMMENT></COMMENT>
   <MAPTARGET>
 
@@ -1240,7 +1240,7 @@
 
   <!-- nodes -->
 
-<MAPINVOKE SERVICE="wx.mcp.server.services.utils:createCacheKeyFromSecurityContext" VALIDATE-IN="$none" VALIDATE-OUT="$none" INVOKE-ORDER="0">
+<MAPINVOKE SERVICE="wx.mcp.server.services.utils.common:createCacheKeyFromSecurityContext" VALIDATE-IN="$none" VALIDATE-OUT="$none" DISABLED="true" INVOKE-ORDER="0">
 
   <!-- nodes -->
 

@@ -1,77 +1,202 @@
+
+
 # WxMCPServer
 
-**WxMCPServer** is a webMethods Integration Server (IS) package that implements an MCP Server for IBM webMethods Hybrid Integration (IWHI).  
+**WxMCPServer** is a webMethods Integration Server (IS) package that implements an [MCP Server](https://modelcontextprotocol.io/specification/2025-06-18) (current as of 2025-06-18) for IBM webMethods Hybrid Integration (IWHI).
 It requires either **webMethods Integration Server** or **webMethods Microservices Runtime** for hosting.
 
-## Overview
+## What's New
+**v1.3.2 (February 2, 2026)**
+- Early support for MCP tools implemented by [local webMethods Integration Server flows](./resources/IS/README.md) 
+- Various bug fixes
 
-WxMCPServer enables you to expose your existing APIs — including their associated API Gateway policies (e.g., logging, authentication, API Key, or OAuth2) — as **MCP Tools** through an enterprise-grade integration platform.  
+**v1.3.1 (January 6, 2026)** 
+- Introduced new header names, please refer to latest [WxMCPServer 1.5 API specification](/resources/APIs/WxMCP-Server/WxMCP-Server-API-1.5.yaml)
+- Introduced new webMethods IS endpoint `https://<server>:<port>/v1_5_0/mcp`
+- Introduced on-demand loading of tools. If tools are not presented in local cache (i.e. due to refreshing the package), they are loaded even without enforcing "tools/list"
+## Table of Contents
+
+- [1. Overview](#1-overview)  
+- [2. Key Benefits](#2-key-benefits)  
+- [3. Requirements](#3-requirements)  
+  - [3.1 Implementing Tool Catalog on webMethods API Management](#31-implementing-tool-catalog-on-webmethods-api-management)
+  - [3.2 Implementing Tool Catalog on Azure API Management](#32-implementing-tool-catalog-on-azure-api-management)
+  - [3.3 Implementing Tool Catalog on IBM API Connect](#33-implementing-tool-catalog-on-ibm-api-connect)
+- [4. Roles and Responsibilities](#4-roles-and-responsibilities)  
+- [5. Quick Start](#5-quick-start)  
+  - [5.1 MCP Tool Catalog API](#51-mcp-tool-catalog-api)  
+  - [5.2 webMethods Integration Server](#52-webmethods-integration-server)  
+  - [5.3 Installing WxMCPServer](#53-installing-package-wxmcpserver-on-webmethods-integration-server)  
+  - [5.4 Configuring WxMCPServer](#54-configuring-wxmcpserver)  
+  - [5.5 Protecting WxMCPServer](#55-protecting-wxmcpserver-implementation)  
+- [6. Integration Server Global Variables](#6-integration-server-global-variables)  
+- [7. Configuration Examples](#7-configuration-examples)  
+  - [7.1 Claude Desktop — stdio \| npx \| API Key](#71-claude-desktop--stdio--npx--api-key)  
+  - [7.2 Claude Desktop — stdio \| npx \| OAuth Style](#72-claude-desktop--stdio--npx--oauth-style)  
+  - [7.3 IBM watsonx Orchestrate | Langflow — stdio | uvx | API Key](#73-ibm-watsonx-orchestrate-langflow-stdio-uvx-api-key) 
+  - [7.4 VS Code MCP Server — Streamable HTTP](#74-vs-code-mcp-server---streamable-http)  
+- [8. Limitations](#8-limitations)
+
+---
+
+## 1. Overview
+
+WxMCPServer enables you to expose your existing APIs, including their existing API policies, as **MCP Tools** through an enterprise-grade integration platform.
 
 It leverages your existing API management infrastructure:
 
-- **Developer Portal** — used to look up APIs to be exposed as tools  
-- **API Gateway** — enforces policies such as logging, authentication, and authorization  
+- **API Catalog**  
+  Introspect API Management applications or Developer Portals for APIs to be exposed as MCP tools  
+- **API Gateway**  
+  Enforce policies such as logging, authentication, and authorization  
 
-In the current solution approach, the **Portal Client API** is grouped together with business APIs into an API product. This API product is then used to retrieve metadata (including the [OpenAPI](https://www.openapis.org/) specification) for all APIs in the product.
+![Screenshot](resources/images/overview.png)
 
-## Platform Support
+In the current solution approach, the **MCP Tool Catalog API** is grouped together with business APIs into an API product. This API product is then used to retrieve metadata (including the [OpenAPI](https://www.openapis.org/) specification) for all APIs in the product.
 
-While there are pre-configured assets for webMethods available, any API management platform **can** be used — only the current `WxMCPServer` implementation is bound to webMethods-specific APIs.  
-To integrate with non-IBM API management solutions, you must implement the **Portal Client API** interface (OpenAPI specification).
+---
 
-## Key Benefits
+## 2. Key Benefits
 
 - Reuse existing corporate APIs as AI-accessible MCP tools  
 - Retain existing API Gateway security and policy enforcement  
-- Integrate seamlessly with Developer Portals for API discovery  
-- One API key or access token can access the Portal Client API and all business APIs in the same API product
+- Integrate seamlessly with API catalogs for API discovery  
+- One API key or access token can access the MCP Tool Catalog API and all business APIs in the same API product  
 
-## Roles and Responsibilities
+---
 
-- **MCP Host** and **MCP Client** — External components (not part of this solution) essential for using the tools; examples include Claude Desktop or Langflow  
-- **WxMCPServer** — webMethods IS package implementing the MCP Server  
-- **API Gateway** — Hosts business APIs (to be exposed as MCP tools) and the Portal Client API to extract API metadata from the Developer Portal  
-- **Developer Portal** — Allows AI developers to request access to API products and retrieve API keys or OAuth credentials
+## 3. Requirements
+
+**WxMCPServer** requires **IBM webMethods Integration Server** or **IBM webMethods Microservices Runtime** as the server (tested with v11.1).  
+To integrate with API Management solutions, you must implement the [MCP Tool Catalog API](/resources/APIs/WxMCP-Tool-Catalog/WxMCP-Tool-Catalog-1-1.yml).
+
+Instructions are provided (along with pre-configured assets) on how to implement this API on various systems:
+
+### 3.1 Implementing Tool Catalog on webMethods API Management
+
+[Detailed description for webMethods API Management](/resources/APIs/WxMCP-Tool-Catalog/implementations/webMethods/readme.md)
+
+### 3.2 Implementing Tool Catalog on Azure API Management
+
+[Detailed description for Azure API Management](/resources/APIs/WxMCP-Tool-Catalog/implementations/azure/readme.md) 
+
+### 3.3 Implementing Tool Catalog on IBM API Connect
+
+[Detailed description for IBM API Connect](/resources/APIs/WxMCP-Tool-Catalog/implementations/api-connect/readme.md)  
+
+The approach is generally open for 3rd party API Management solutions ("Federated API Management").
+
+---
+
+## 4. Roles and Responsibilities
+
+- **MCP Host** and **MCP Client**
+External components (not part of this solution) essential for using the tools; examples include Claude Desktop or Langflow  
+- **WxMCPServer**
+webMethods IS package implementing the MCP Server  
+- **API Gateway**
+Hosts business APIs (to be exposed as MCP tools) and the MCP Tool Catalog API to extract API metadata from the API Catalog  
+- **API Catalog**
+Allows AI developers to request access to API products and retrieve API keys or OAuth credentials  
 
 The following graphic provides an overview of the architecture:
 
-![Screenshot](resources/images/WxMCPServer-Architecture.jpg)
+![Screenshot](/resources/images/architecture.png)
 
-## WxMCPServer Requirements
+---
 
-WxMCPServer requires the following components:
+## 5. Quick Start
 
-- MCP Host and Client (e.g., Claude Desktop, Langflow, or similar)
-- webMethods API Gateway with Portal Client API implemented  
-  ([Specification](resources/APIs/Portal-Client/MCP-Portal-Client-1-0.yml) —  
-  [Preconfigured API Archive](resources/exports/webMethods-API-Gateway/WxMCP-Portal-Client.zip))
-- webMethods WxMCP-Server-API hosted on API Gateway  
-  ([Specification](resources/APIs/WxMCP-Server/WxMCP-Server-API-1.3.yaml))
-- This IS package deployed on webMethods Integration Server or Microservices Runtime (11.x or higher)
+### 5.1 MCP Tool Catalog API
 
-## Integration Server Global Variables
+- First thing to do is to decide from which API management solution you want to fetch the **tools** (aka APIs from existing API product). [Follow these instructions.](#3-requirements)
+- Test the API isolated before continuing with **WxMCPServer**
+
+### 5.2 webMethods Integration Server 
+
+- If you are a webMethods Integration Server customer, you can re-use your existing Integration Server runtime
+- If you do not have a webMethods Integration Server yet, you can download [webMethods Service Designer](https://www.ibm.com/resources/mrs/assets/DownloadList?source=WMS_Designers&lang=en_US) together with the embedded development runtime of Integration Server.
+- If you are working with **IBM webMethods Hybrid Integration** in SaaS, you can re-use Cloud runtime or register a new [Edge Runtime](https://www.ibm.com/docs/en/hybrid-integration/saas?topic=tutorials-registering-viewing-managing-monitoring-edge-runtimes)
+
+### 5.3 Installing package WxMCPServer on webMethods Integration Server
+
+- If you are running locally you can use **webMethods Service Designer** and the **webMethods Package Registry** to load the package **WxMCPServer**
+![Screenshot](/resources/images/wm-package-registry.png)
+
+- If you are running inside **IBM webMethods Hybrid Integration** (SaaS)  you can add this **GitHub repository** as external [package](https://www.ibm.com/docs/en/wm-integration-ipaas?topic=packages-adding) to your IBM webMethods Hybrid Integration [project](https://www.ibm.com/docs/en/wm-integration-ipaas?topic=troubleshooting-projects)
+
+### 5.4 Configuring WxMCPServer
+
+- Use the [global variables](#6-integration-server-global-variables) to define MCP server-wide settings. Use the API specific configuration headers to overwrite these settings per **MCP client**.
+
+### 5.5 Protecting WxMCPServer implementation
+
+If you do not run a local MCP server, but a shared one used for enterprise scenarios, you should put the [WxMCPServer API](/resources/APIs/WxMCP-Server/WxMCP-Server-API-1.5.yaml) on the API Gateway in front of the **WxMCPServer** implementation. Ideally you put it into the same API product as the **MCP Tool Catalog** API, so that all APIs share the same credentials ("Invoke what you can list and vice versa").
+See full enterprise architecture below:
+
+![Screenshot](/resources/images/enterprise-architecture.png)
+
+There is a pre-configured [archive](/resources/APIs/WxMCP-Server/implementations/webMethods/exports/WxMCP-Server-API.zip) for webMethods API Gateway, that implements **WxMCPServer API** for **webMethods API Gateway**
+
+### 5.5 Running WxMCPServer in Container / Kubernetes
+
+If you want to run WxMCPServer in a container, you can use the [Dockerfile](Dockerfile) and [README-k8s.md](k8s/README-k8s.md) as a starting point.
+The example Kubernetes deployment is based on Microservice Runtime v11.1.
+
+Step-by-step (more instructions can be found in [README-k8s.md](k8s/README-k8s.md)):
+```bash
+# Pull base image from wM container registry
+docker pull ibmwebmethods.azurecr.io/webmethods-microservicesruntime:11.1
+# Build custom Docker image
+docker build -t wxmcpserver .
+# start your kubernetes cluster
+# execute k8s script
+k8s/deploy-local.sh
+```
+
+Connect IBM Bob to the MCP server:
+```json
+"wxmcp-http-server": {
+    "url": "http://mcp.k8s.orb.local/wxmcp/mcp",
+    "type": "streamable-http",
+    "headers": {
+        "x-auth-type": "API_KEY",
+        "x-tool-catalog-base-url": "http://apigw1015-apigateway-admin.apigateway.svc.cluster.local:5555/gateway/WxMCP-Tool-Catalog/1.1",
+        "x-api-key": "x-Gateway-APIKey",
+        "Content-Type": "application/json",
+        "x-api-key-headername": "x-Gateway-APIKey"
+    }
+}
+```
+---
+
+## 6. Integration Server Global Variables
 
 You can set default values for `WxMCPServer`, which are used if no corresponding HTTP headers are sent.
 
 *Note:* MCP client HTTP headers **always** take precedence over default values.
 
-| Variable Name                    | Required | Default Value                   | Description |
-|----------------------------------|----------|----------------------------------|-------------|
-| `wxmcp.cache.manager.name`       | No       | `WxMCP_Cache_Manager_Default`   | The name of the Cache Manager to be used. |
-| `wxmcp.auth.type`                | Yes      | (none)                           | Authentication type: `"OAUTH"` or `"API_KEY"`. |
-| `wxmcp.portal.client.base.url`   | Yes      | (none)                           | Base URL of your Portal Client API on API Gateway, e.g., `https://myAPIGateway/gateway/MCP-Portal-Client/1.0` |
-| `wxmcp.api.key.headername`       | Conditional | (none)                        | Used only when `wxmcp.auth.type` = `"API_KEY"`. Specifies the API key header name. |
-| `wxmcp.tool.header.prefix`       | No       | `header_`                        | Default prefix for tool header properties. |
-| `wxmcp.tool.query.prefix`        | No       | `query_`                         | Default prefix for tool query parameter properties. |
-| `wxmcp.tool.path.prefix`         | No       | `path_`                          | Default prefix for tool path parameter properties. |
-| `wxmcp.tool.response.mode`       | No       | `both`                           | Tool response format: `text`, `structured`, or `both`. |
-| `wxmcp.response.code.mode`       | No       | `stdio`                          | Response mode: `"stdio"` (always HTTP 200) or `"http"` (actual status codes). |
+| Variable Name                 | Required    | Default Value                      | Description                                                                                         |
+|------------------------------|-------------|----------------------------------|-----------------------------------------------------------------------------------------------------|
+| `wxmcp.cache.manager.name`    | No          | `WxMCP_Cache_Manager_Default`    | The name of the Cache Manager to be used.                                                          |
+| `wxmcp.auth.type`             | Yes         | `INTERNAL` (none)                           | Authentication type: `"OAUTH"` or `"API_KEY"` for API Management solutions.   `"INTERNAL"` for Integration Server flows with Integration Server as Auth Server, `"THIRD_PARTY"` for external Auth Server                                                    |
+| `wxmcp.tool.catalog.base.url`| Yes         | (none)                           | Base URL of your MCP Tool Catalog API on API Gateway, e.g., `https://<myWebMethodsAPIGateway>/gateway/WxMCP-Tool-Catalog-wMAPIGW/1.1` |
+| `wxmcp.api.key.headername`    | Conditional | (none)                           | Used only when `wxmcp.auth.type` = `"API_KEY"`. Specifies the API key header name.                   |
+| `wxmcp.tool.header.prefix`    | No          | `header_`                        | Default prefix for tool header properties.                                                         |
+| `wxmcp.tool.query.prefix`     | No          | `query_`                         | Default prefix for tool query parameter properties.                                                |
+| `wxmcp.tool.path.prefix`      | No          | `path_`                         | Default prefix for tool path parameter properties.                                                 |
+| `wxmcp.tool.response.mode`    | No          | `both`                          | Tool response format: `text`, `structured`, or `both`.                                            |
+| `wxmcp.response.code`    | No          | `stdio`                         | Response mode: `"stdio"` (always HTTP 200) or `"http"` (actual status codes).                       |
+| `wxmcp.jwks.uri`    | Conditional          | (none)                          | Mandatory when `wxmcp.auth.type` = `"THIRD_PARTY"`. Specifies the valid JWKS URI to external Auth Server.                       |
+| `wxmcp.jwt.audience`    | No          | `wxmcpserver`                         | Checked when `wxmcp.auth.type` = `"THIRD_PARTY"`. If your JWT audience claim returns a different audience, please adapt this value accordingly.                       |
 
-## Configuration Examples
+---
 
-### Claude Desktop — API Key
+## 7. Configuration Examples
 
-```
+### 7.1 Claude Desktop — stdio | npx | API Key
+
+```json
 {
   "mcpServers": {
     "mcp-iwhi-apikey-demo": {
@@ -81,32 +206,32 @@ You can set default values for `WxMCPServer`, which are used if no corresponding
         "mcp-remote",
         "http://<Integration Server Host>:<Integration Server Port>/mcp",
         "--header",
-        "auth_type:API_KEY",
+        "x-auth-type:API_KEY",
         "--header",
-        "api_key:<The API Key>",
+        "x-api-key:<The API Key>",
         "--header",
-        "portal_client_base_url:https://<webMethods API Gateway Host>:<webMethods API Gateway Port>/gateway/MCP-Portal-Client/1.0",
+        "x-tool-catalog-base-url:https://<webMethods API Gateway Host>:<webMethods API Gateway Port>/gateway/WxMCP-Tool-Catalog/1.1",
         "--header",
-        "api_key_headername:<Your API Key header - i.e. x-Gateway-APIKey for webMethods>",
+        "x-api-key-headername:<Your API Key header - i.e. x-Gateway-APIKey for webMethods>",
         "--header",
-        "tool_header_prefix:header_",
+        "x-tool-header-prefix:header_",
         "--header",
-        "tool_query_prefix:query_",
+        "x-tool-query-prefix:query_",
         "--header",
-        "tool_path_prefix:path_",
-		"--header",
-		"tool_response_mode:structured",
-		"--header",
-		"response_code:http"
+        "x-tool-path-prefix:path_",
+        "--header",
+        "x-tool-response-mode:structured",
+        "--header",
+        "x-response-code:http"
       ]
     }
   }
 }
 ```
 
-### Claude Desktop — OAUTH style
+### 7.2 Claude Desktop — stdio | npx | OAUTH Style
 
-```
+```json
 {
   "mcpServers": {
     "mcp-iwhi-oauth-demo": {
@@ -116,65 +241,60 @@ You can set default values for `WxMCPServer`, which are used if no corresponding
         "mcp-remote",
         "http://<Integration Server Host>:<Integration Server Port>/mcp",
         "--header",
-        "auth_type:OAUTH",
+        "x-auth-type:OAUTH",
         "--header",
-        "portal_client_base_url:https://<webMethods API Gateway Host>:<webMethods API Gateway Port>/gateway/MCP-Portal-Client/1.0",
+        "x-tool-catalog-base-url:https://<webMethods API Gateway Host>:<webMethods API Gateway Port>/gateway/WxMCP-Tool-Catalog/1.1",
         "--header",
-        "oauth_bearer_token:<The bearer token>",
+        "x-oauth-bearer-token:<The bearer token>",
         "--header",
-        "tool_header_prefix:header_",
+        "x-tool-header-prefix:header_",
         "--header",
-        "tool_query_prefix:query_",
+        "x-tool-query-prefix:query_",
         "--header",
-        "tool_path_prefix:path_",
-		"--header",
-		"tool_response_mode:structured",
-		"--header",
-		"response_code:http"
+        "x-tool-path-prefix:path_",
+        "--header",
+        "x-tool-response-mode:structured",
+        "--header",
+        "x-response-code:http"
       ]
     }
   }
 }
 ```
 
-### DataStaX/Langflow MCP Server - API Key style 
+### 7.3 IBM watsonx Orchestrate | Langflow  - stdio | uvx | API Key
 
-```
-npx -y mcp-remote http://<Integration Server Host>:<Integration Server Port>/mcp \
---header "auth_type:API_KEY" \
---header "portal_client_base_url:https://<webMethods API Gateway Host>:<webMethods API Gateway Port>/gateway/MCP-Portal-Client/1.0" \
---header "api_key:<The API Key>" \
---header "api_key_headername:<Your API Key header - i.e. x-Gateway-APIKey for webMethods>" \
---header "tool_header_prefix:header_" \
---header "tool_query_prefix:query_" \
---header "tool_path_prefix:path_" \
---header "tool_response_mode:both" \
---header "response_code:stdio"
+```bash
+uvx mcp-proxy 
+--headers x-api-key <Your API Key header - i.e. x-Gateway-APIKey for webMethods>
+--headers x-tool-catalog-base-url https://<webMethods API Gateway Host>:<webMethods API Gateway Port>/gateway/WxMCP-Tool-Catalog/1.1
+http://<Integration Server Host>:<Integration Server Port>/mcp --transport streamablehttp
 ```
 
-### DataStaX/Langflow MCP Server - OAuth style 
+### 7.4 VS Code MCP Server - Streamable HTTP
 
+```json
+{
+  "servers": {
+    "my-wxmcp-http-server": {
+      "url": "http://<Integration Server Host>:<Integration Server Port>/mcp",
+      "type": "http",
+      "headers": {
+        "x-auth-type": "API_KEY",
+        "x-tool-catalog-base-url": "https://<webMethods API Gateway Host>:<webMethods API Gateway Port>/gateway/WxMCP-Tool-Catalog/1.1",
+        "x-api-key": "<Your API Key header - i.e. x-Gateway-APIKey for webMethods>",
+        "Content-Type": "application/json",
+        "x-api-key-headername": "x-Gateway-APIKey"
+      }
+    }
+  },
+  "inputs": []
+}
 ```
-npx -y mcp-remote http://<Integration Server Host>:<Integration Server Port>/mcp \
---header "auth_type:OAUTH" \
---header "portal_client_base_url:https://<webMethods API Gateway Host>:<webMethods API Gateway Port>/gateway/MCP-Portal-Client/1.0" \
---header "oauth_bearer_token:<The bearer token>" \
---header "tool_header_prefix:header_" \
---header "tool_query_prefix:query_" \
---header "tool_path_prefix:path_" \
---header "tool_response_mode:both" \
---header "response_code:stdio"
-```
 
-## Setup (webMethods API Gateway)
+---
 
-A pre-configured **Portal Client API** archive is available for webMethods API Gateway.  
-Import this archive to create the `WxMCP-Portal-Client` API in API Gateway.  
+## 8. Limitations
 
-Then update the credentials in the **`wxmcp-portal-credentials`** alias with the technical user's credentials that can access the **webMethods Developer Portal**.
-
-## Limitations
-
-- Only OpenAPI 3.x specifications in **JSON format** are supported.  
-  (No issue for webMethods API Gateway, but third-party gateways may require conversion.)
-- Only `"Content-Type": "application/json"` is supported for sending and receiving.
+- Only `"Content-Type": "application/json"` is supported for sending and receiving data to APIs.
+- The [Token-Passtrough anti-pattern](https://modelcontextprotocol.io/specification/2025-06-18/basic/security_best_practices#token-passthrough) will be addressed shortly by introducing token swapping capabilities
